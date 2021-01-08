@@ -7,7 +7,7 @@ The code in this repository was used to perform a large scale analysis on Androi
 
 Our work is split over multiple repositories to make it easier to manage, but if you are simply looking to recompute our results or perform your own study using our tools, we provide a [singularity](https://sylabs.io/) container definition file that can be built using just two lines code:
 
-    wget https://github.com/NoahMauthe/decompilation_analysis/master/decompilation_analysis.def
+    wget https://raw.githubusercontent.com/NoahMauthe/decompilation_analysis/master/decompilation_analysis.def
     singularity build decompilation_analysis.sif decompilation_analysis.def
 
 ## [Crawler](https://github.com/NoahMauthe/apk_crawler)
