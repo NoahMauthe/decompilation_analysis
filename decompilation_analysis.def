@@ -1,0 +1,67 @@
+Bootstrap: docker
+From: archlinux:latest
+
+
+%post
+	# Setting pacman to love candy
+		echo "ILoveCandy" >> /etc/pacman.conf
+	# Installing required packages
+		pacman -Sy --noconfirm jdk8-openjdk python maven unzip gcc make fakeroot sudo git wget
+	# Installing python packages
+		cd /
+		wget https://bootstrap.pypa.io/get-pip.py
+		python get-pip.py
+		rm get-pip.py
+		python -m pip install -U pip
+		python -m pip install --upgrade pip
+#		python -m pip install -r requirements.txt
+		git clone https://github.com/NoahMauthe/APIs.git
+		cd APIs
+		python setup.py sdist bdist_wheel
+		python -m pip install dist/API*.tar.gz
+		cd ..
+        rm -rf APIs
+	# Configuring system for AUR install
+		useradd -m nopriv
+	# Installing AUR packages
+	 # Android SDK commandline tools
+		git clone https://aur.archlinux.org/android-sdk-cmdline-tools-latest.git cmd_tools
+		chmod 777 cmd_tools
+		cd cmd_tools
+		sudo -u nopriv makepkg
+		pacman -U --noconfirm *.pkg.tar.*
+		cd ..
+		rm -rf cmd_tools
+	 # Android SDK build tools
+	 	git clone https://aur.archlinux.org/android-sdk-build-tools.git build_tools
+        chmod 777 build_tools
+        cd build_tools
+        sudo -u nopriv makepkg
+        pacman -U --noconfirm *.pkg.tar.*
+        cd ..
+		rm -rf build_tools
+	# Removing AUR specific configuration
+		userdel -r nopriv
+		pacman -Rns --noconfirm sudo fakeroot make wget
+
+
+%apprun analysis
+	cd /scif/apps/analysis/analysis/
+	python run_analysis.py "$@"
+
+%appinstall analysis
+	git clone https://github.com/NoahMauthe/decompilation_analysis.git analysis --depth 1
+	cd analysis/
+	chmod +x build_decompilers.sh
+	./build_decompilers.sh
+	pacman -Rns --noconfirm maven gcc
+
+# APP crawler
+%appinstall crawler
+	git clone https://github.com/NoahMauthe/apk_crawler.git crawler --depth 1
+    pacman -Rns --noconfirm git
+
+%apprun crawler
+	cd /scif/apps/crawler/crawler/
+	python crawl.py "$@"
+
