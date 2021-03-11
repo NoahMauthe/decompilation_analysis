@@ -2,13 +2,14 @@
 
 The code in this repository was used to perform a large scale analysis on Android applications presented in the paper *"A Large-Scale Empirical Study of Android App Decompilation"*.
 
-
 ## Build
 
 Our work is split over multiple repositories to make it easier to manage, but if you are simply looking to recompute our results or perform your own study using our tools, we provide a [singularity](https://sylabs.io/) container definition file that can be built using just two lines code:
 
     wget https://raw.githubusercontent.com/NoahMauthe/decompilation_analysis/master/decompilation_analysis.def
     singularity build decompilation_analysis.sif decompilation_analysis.def
+
+(Note that the container was built with singularity 3.5 and may not work with later versions.)
 
 ## [Crawler](https://github.com/NoahMauthe/apk_crawler)
 
@@ -27,7 +28,7 @@ Additionally, we perform a matching of the failures reported by our decompilers 
 
 In order to achieve our analysis goal, we relied on a number of open-source tools:
 
-###Decompilers
+### Decompilers
 
 As mentioned before, we used four different decompilers:
 
@@ -46,3 +47,11 @@ Additionally, we employed multiple dex-tools for various reasons:
 * [APKiD](https://github.com/rednaga/APKiD) - A fingerprinting tool that checks for the presence of packers.
 * [apkanalyzer](https://developer.android.com/studio/command-line/apkanalyzer) - A part of the android command line tools, it allowed us to extract method sizes and signatures.
 * [dex2jar](https://github.com/pxb1988/dex2jar) - As the name implies, dex2jar is a conversion tool that enabled the use of our  three java decompilers.
+
+## Dataset
+
+The raw data (one CSV-file per app) is about 6.5 GB in size when compressed (108 GB uncompressed size), and is currently available only on demand. The set of crawled apps (F-Droid and Google Play) can also be made available to researchers.
+
+## Notebooks and dataframes
+
+The directory `notebooks` contains [Jupyter](https://jupyter.org/) notebooks for analyzing the dataset. `gen_dataframes.ipynb` is used for preparing [Pandas](https://pandas.pydata.org/) dataframes from the dataset, while `extract_stats.ipynb` is used for the actual data analysis and generating plots. Pre-generated dataframes are also provided in this directory.
