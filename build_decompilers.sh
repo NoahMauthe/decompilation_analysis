@@ -27,12 +27,14 @@ cd ..
 echo "Starting fernflower installation..."
 git clone https://github.com/fesh0r/fernflower.git
 cd fernflower || exit 1
+git checkout f61e659e58c650330fae5fb28f6336b8b1b82d09
 ./gradlew jar
 echo "Done!"
 cd ..
 echo "Starting jadx installation..."
 git clone https://github.com/skylot/jadx.git
 cd jadx || exit 1
+git checkout 89b4ae6a6fe754c1cd2342a98f5cb0bdccc49a86
 ./gradlew dist
 echo "Done!"
 cd ..
