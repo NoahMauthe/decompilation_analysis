@@ -11,8 +11,8 @@ def results(path, packer, package_name, data, results, category, downloads):
         file.write(f'Downloads:\t{downloads}\n')
         file.write(f'Family:\t{category}\n')
         file.write('#' * 10 + '\n\n')
-        file.write('signature;size;C;F;J;P;\n')
-        for method in data['methods']:
+        file.write('signature;size;C;F;J;P;C-R;F-R;J-R;P-R;\n')
+        for method in sorted(data['methods']):
             file.write(str(method))
     with open(os.path.join(path, f'{package_name}.json'), 'w') as file:
         json.dump(results, file, indent=4, sort_keys=True)

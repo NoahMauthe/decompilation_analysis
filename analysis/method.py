@@ -15,10 +15,15 @@ def _get_result(signature, results):
 class Method(object):
 
     def __init__(self, csv_str):
-        self.signature, self.size, self.cfr, self.fernflower, self.jadx, self.procyon, ignored = csv_str.split(';', 6)
+        self.signature, self.size, self.cfr, self.fernflower, self.jadx, self.procyon, self.cfr_reason, \
+        self.fernflower_reason, self.jadx_reason, self.procyon_reason, ignored = csv_str.split(';', 10)
 
     def __str__(self):
-        return f'{self.signature};{self.size};{self.cfr};{self.fernflower};{self.jadx};{self.procyon};\n'
+        return f'{self.signature};{self.size};{self.cfr};{self.fernflower};{self.jadx};{self.procyon};' \
+               f'{self.cfr_reason};{self.fernflower_reason};{self.jadx_reason};{self.procyon_reason};\n'
+
+    def __lt__(self, other):
+        return self.signature < other.signature
 
     def add_decompiler_info(self, results):
         normalize = {

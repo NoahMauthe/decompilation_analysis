@@ -185,24 +185,27 @@ def parse_jadx(log_file):
         methods : list
             A list of all failed methods, qualified with their class name.
     """
-    jadx_results = []
+    jadx_results = dict()
     with open(log_file, 'r') as log:
         for line in log:
             line = line.strip()
             if ' errors occurred in following nodes:' in line:
+                break
+            if line.startswith('ERROR - ['):
                 try:
-                    error = next(log)
-                    while error.startswith('ERROR -   Method: '):
-                        method = error.split('ERROR -   Method: ')[1][:-1]
-                        method, ret_type = method.split(':')
-                        method, args = method.split('(')
-                        splits = method.split('.')
-                        method = splits[-1]
-                        class_ = '.'.join(splits[:-1])
-                        method = method + '(' + args + ':' + ret_type
-                        class_name, signature = standardize_jadx(class_, method)
-                        jadx_results.append(signature)
-                        error = next(log)
+                    info = line.split('] ', 1)[1]
+                    reason, info = info.split(' in method: ', 1)
+                    info, details = info.split(', details: ', 1)
+                    reason += f', details: {details}'
+                    method = info.split(', file:', 1)[0]
+                    method, ret_type = method.split(':')
+                    method, args = method.split('(')
+                    splits = method.split('.')
+                    method = splits[-1]
+                    class_ = '.'.join(splits[:-1])
+                    method = method + '(' + args + ':' + ret_type
+                    class_name, signature = standardize_jadx(class_, method)
+                    jadx_results[signature] = reason
                 except IndexError:
                     LOGGER.exception(f'Encountered an error while parsing jadx for {log_file}')
     return {'jadx': {
@@ -264,12 +267,13 @@ def parse_cfr(out):
         methods : list
             A list of all failed methods, qualified with their class name.
     """
-    cfr_results = []
+    cfr_results = dict()
     with open(os.path.join(out, 'summary.txt')) as summary:
         for line in summary:
             if line.startswith('FAILED_METHOD:'):
-                class_name, signature = line.split('FAILED_METHOD:\t')[-1].strip().split(' ', 1)
-                cfr_results.append(standardize_cfr(class_name, signature)[1])
+                rest, reason = line.split('FAILED_METHOD:\t')[-1].strip().split(';')
+                class_name, signature = rest.split(' ', 1)
+                cfr_results[standardize_cfr(class_name, signature)[1]] = reason
     return {'cfr': {
         'timeout': False,
         'methods': cfr_results
@@ -331,7 +335,7 @@ def parse_procyon(out):
         The list of files with no failures as those can be removed.
     """
     LOGGER.debug('Started parsing procyon output')
-    procyon_results = []
+    procyon_results = dict()
     files_to_remove = []
     for file in fnmatch.filter(glob.iglob(os.path.join(out, '**'), recursive=True), '*.java'):
         file_name = file.split(out)[-1][1:-5].replace('/', '.')
@@ -341,7 +345,7 @@ def parse_procyon(out):
                 if 'The method "' in line and '" could not be decompiled.' in line:
                     found_error = True
                     class_name, signature = standardize_procyon(file_name, line.split('"')[1])
-                    procyon_results.append(signature)
+                    procyon_results[signature] = line.strip().split("could not be decompiled. ")[1]
         if not found_error:
             files_to_remove.append(file)
     LOGGER.debug('Finished parsing procyon output')
@@ -402,7 +406,7 @@ def parse_fernflower(log_dir):
         methods : list
             A list of all failed methods, qualified with their class name.
     """
-    fernflower_results = []
+    fernflower_results = dict()
     with open(os.path.join(log_dir, 'stdout.log'), 'r') as log_file:
         file_name = ''
         for line in log_file:
@@ -411,7 +415,7 @@ def parse_fernflower(log_dir):
             elif "couldn't be decompiled." in line:
                 signature = line.split('Method ')[1].split(" couldn't be decompiled.")[0].strip()
                 class_name, signature = standardize_fernflower(file_name, signature)
-                fernflower_results.append(signature)
+                fernflower_results[signature] = "Not Implemented"
     return {'fernflower': {
         'timeout': False,
         'methods': fernflower_results
@@ -584,11 +588,12 @@ def analyse_app(file, directory, package_name, out, category, downloads, dex):
         return procyon_files, False
 
 
-def _create_methods(methods, dex_compatible, lookup, matches, timed_out):
+def _create_methods(methods, dex_compatible, lookup, matches, timed_out, reasons):
     decompilers = ['cfr', 'fernflower', 'jadx', 'procyon']
     created_methods = set()
     for signature in methods.keys():
         csv_str = f'{signature};{methods[signature]};'
+        csv_end = ""
         compatible = dex_compatible[signature]
         for decompiler in decompilers:
             if decompiler in timed_out:
@@ -597,15 +602,18 @@ def _create_methods(methods, dex_compatible, lookup, matches, timed_out):
                 dex = compatible.get(decompiler, None)
                 if not dex:
                     csv_str += 'N;'
+                    csv_end += 'N;'
                     continue
                 if dex in lookup[decompiler]:
                     dec_matches = matches[decompiler]
                     dec_matches[dex] = dec_matches[dex] + [signature]
                     matches[decompiler] = dec_matches
                     csv_str += 'F;'
+                    csv_end += reasons.get(decompiler, dict()).get(dex, '') + ';'
                 else:
                     csv_str += 'S;'
-        created_methods.add(Method(csv_str))
+                    csv_end += ';'
+        created_methods.add(Method(csv_str + csv_end))
     return created_methods, matches
 
 
@@ -614,17 +622,21 @@ def combine_results(decompiler_results, apk_analyzer_results, apk_path):
             'method_count': apk_analyzer_results['method_count']
             }
     matches = dict()
+    reasons = dict()
     timed_out = set()
     for decompiler in decompiler_results.keys():
         if decompiler_results[decompiler].get('timeout', False):
             timed_out.add(decompiler)
             matches[decompiler] = dict()
             continue
-        methods = decompiler_results[decompiler].get('methods', [])
+        methods = decompiler_results[decompiler].get('methods', dict())
         match = dict()
-        for method in methods:
+        reas = dict()
+        for method in methods.keys():
             match[method] = []
+            reas[method] = methods[method]
         matches[decompiler] = match
+        reasons[decompiler] = reas
     dex_compatible = dict()
     methods = apk_analyzer_results['methods']
     signatures = methods.keys()
@@ -636,7 +648,7 @@ def combine_results(decompiler_results, apk_analyzer_results, apk_path):
     lookup = dict()
     for decompiler in decompiler_results.keys():
         lookup[decompiler] = set(matches[decompiler].keys())
-    created_methods, debug_data = _create_methods(methods, dex_compatible, lookup, matches, timed_out)
+    created_methods, debug_data = _create_methods(methods, dex_compatible, lookup, matches, timed_out, reasons)
     data['methods'] = created_methods
     return data, debug_data
 
