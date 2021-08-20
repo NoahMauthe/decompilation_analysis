@@ -415,7 +415,7 @@ def parse_fernflower(log_dir):
             elif "couldn't be decompiled." in line:
                 signature = line.split('Method ')[1].split(" couldn't be decompiled.")[0].strip()
                 class_name, signature = standardize_fernflower(file_name, signature)
-                fernflower_results[signature] = "Not Implemented"
+                fernflower_results[signature] = next(log_file).strip()
     return {'fernflower': {
         'timeout': False,
         'methods': fernflower_results
