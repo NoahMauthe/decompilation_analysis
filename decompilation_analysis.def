@@ -15,6 +15,7 @@ From: archlinux:latest
 		python -m pip install -U pip
 		python -m pip install --upgrade pip
         python -m pip install beautifulsoup4
+        pyhton -m pip install itertools
 		git clone https://github.com/NoahMauthe/APIs.git
 		cd APIs
 		python setup.py sdist bdist_wheel
@@ -59,7 +60,6 @@ From: archlinux:latest
 # APP crawler
 %appinstall crawler
 	git clone https://github.com/NoahMauthe/apk_crawler.git crawler --depth 1
-    pacman -Rns --noconfirm git
 
 %apprun crawler
 	cd /scif/apps/crawler/crawler/

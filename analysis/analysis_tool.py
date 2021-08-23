@@ -6,6 +6,7 @@ import os
 import shutil
 import signal
 import time
+import itertools
 from json.decoder import JSONDecodeError
 from subprocess import Popen, TimeoutExpired
 
@@ -195,7 +196,16 @@ def parse_jadx(log_file):
                 try:
                     info = line.split('] ', 1)[1]
                     reason, info = info.split(' in method: ', 1)
-                    info, details = info.split(', details: ', 1)
+                    try:
+                        info, details = info.split(', details: ', 1)
+                    except ValueError:
+                        info = info.split(', file:', 1)[0]
+                        n = next(log).strip()
+                        if n.startswith('ERROR') or n.startswith('INFO'):
+                            log = itertools.chain([n], log)
+                            details = "Failed to extract details"
+                        else:
+                            details = n
                     reason += f', details: {details}'
                     method = info.split(', file:', 1)[0]
                     method, ret_type = method.split(':')
