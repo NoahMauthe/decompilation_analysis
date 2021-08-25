@@ -462,11 +462,11 @@ def fernflower(jar_path, directory):
     except TimeoutExpired:
         LOGGER.error(f'Fernflower timed out after {TIMEOUT} seconds for file {jar_path.split("/")[-1]}')
         timeout = True
-    convert = Popen(['jar xf *.jar; rm *.jar'], shell=True, cwd=files_dir)
-    try:
-        convert.wait(TIMEOUT)
-    except TimeoutExpired:
-        LOGGER.exception(f'Unzippping and removing jar created by fernflower timed out')
+#    convert = Popen(['jar xf *.jar; rm *.jar'], shell=True, cwd=files_dir)
+#    try:
+#        if convert.wait(TIMEOUT) != 0:
+#    except TimeoutExpired:
+#        LOGGER.exception(f'Unzippping and removing jar created by fernflower timed out')
     if timeout:
         result = parse_fernflower(log_dir)
         attrs = result.get('fernflower', {})
