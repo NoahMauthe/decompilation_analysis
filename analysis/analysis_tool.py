@@ -609,6 +609,7 @@ def _create_methods(methods, dex_compatible, lookup, matches, timed_out, reasons
         for decompiler in decompilers:
             if decompiler in timed_out:
                 csv_str += 'T;'
+                csv_end += 'T;'
             else:
                 dex = compatible.get(decompiler, None)
                 if not dex:
