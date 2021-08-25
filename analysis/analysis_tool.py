@@ -281,7 +281,8 @@ def parse_cfr(out):
     with open(os.path.join(out, 'summary.txt')) as summary:
         for line in summary:
             if line.startswith('FAILED_METHOD:'):
-                rest, reason = line.split('FAILED_METHOD:\t')[-1].strip().split(';')
+                rest, reason = line.split('FAILED_METHOD:\t')[-1].strip().split(';', 1)
+                reason = reason.replace(';', '')
                 class_name, signature = rest.split(' ', 1)
                 cfr_results[standardize_cfr(class_name, signature)[1]] = reason
     return {'cfr': {
