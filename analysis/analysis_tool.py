@@ -624,7 +624,7 @@ def _create_methods(methods, dex_compatible, lookup, matches, timed_out, reasons
                     csv_end += reasons.get(decompiler, dict()).get(dex, '') + ';'
                 else:
                     csv_str += 'S;'
-                    csv_end += ';'
+                    csv_end += 'S;'
         created_methods.add(Method(csv_str + csv_end))
     return created_methods, matches
 
