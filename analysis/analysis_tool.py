@@ -526,7 +526,13 @@ def reduce_size(directory, procyon_files, dex):
         shutil.rmtree(os.path.join(directory, 'dex2jar', 'files'), onerror=_handle_error)
         decompilers = ['cfr', 'jadx', 'fernflower']
         cfr_path = os.path.join(directory, 'decompiler', 'cfr')
-        shutil.move(os.path.join(cfr_path, 'files', 'summary.txt'), os.path.join(cfr_path, 'logs', 'summary.txt'))
+        try:
+            shutil.move(os.path.join(cfr_path, 'files', 'summary.txt'), os.path.join(cfr_path, 'logs', 'summary.txt'))
+            os.remove(os.path.join(directory, 'apkanalyzer', 'methods.log'))
+        except FileNotFoundError:
+            LOGGER.error("CFR summary not found, probably decompilation was stopped by an apkanalyzer error.\n"
+                         "Skipping further removal attempts.")
+            return
         for file in procyon_files:
             os.remove(file)
         for root, dirs, files in os.walk(os.path.join(directory, 'decompiler', 'procyon', 'files'), topdown=False):
@@ -538,7 +544,6 @@ def reduce_size(directory, procyon_files, dex):
         shutil.rmtree(os.path.join(directory, 'decompiler', 'procyon', 'logs'), onerror=_handle_error)
     for decompiler in decompilers:
         shutil.rmtree(os.path.join(directory, 'decompiler', decompiler, 'files'), onerror=_handle_error)
-    os.remove(os.path.join(directory, 'apkanalyzer', 'methods.log'))
 
 
 def analyse_app(file, directory, package_name, out, category, downloads, dex):
