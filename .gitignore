@@ -3,6 +3,7 @@
 analysis/tools
 tools
 /**/tools/
+APIs
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
