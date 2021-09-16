@@ -888,6 +888,10 @@ def fix(out_path, base_path):
             LOGGER.info(f'No need to fix {package_name}')
             now += 1
             continue
+        if content.startswith('ERROR:'):
+            LOGGER.info(f'.ecsv for {package_name} signaled error, skipping')
+            now += 1
+            continue
         last_csv_header_line = 0
         current_line = 0
         for line in content.split('\n'):
