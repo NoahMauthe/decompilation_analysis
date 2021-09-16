@@ -871,6 +871,8 @@ def analyse(out, base_path, preserve_dirs, config, dex):
 
 def fix(out_path, base_path):
     files = fnmatch.filter(glob.iglob(os.path.join(base_path, '**'), recursive=True), '*.apk')
+    total = max(len(files), 1)
+    now = 1
     for file in files:
         package_name = file.split('/')[-1][:-4]
         directory = os.path.dirname(file)
@@ -878,11 +880,13 @@ def fix(out_path, base_path):
         src = os.path.join(out_path, f'{package_name}.ecsv')
         if not os.path.exists(src):
             LOGGER.error(f'Did not find existing decompilation results')
+            now += 1
             continue
         with open(src, 'r') as in_file:
             content = in_file.read().strip()
         if content.startswith('Packer'):
             LOGGER.info(f'No need to fix {package_name}')
+            now += 1
             continue
         last_csv_header_line = 0
         current_line = 0
@@ -912,4 +916,5 @@ def fix(out_path, base_path):
               f'{content}\n'
         with open(os.path.join(out_path, f'{package_name}.ecsv'), 'w') as out_file:
             out_file.write(out)
-        LOGGER.info(f'Fixed {package_name}')
+        LOGGER.info(f'Fixed {package_name}:\t{now} / {total}\t({(now / total) * 100 :.2f}%)')
+        now += 1
