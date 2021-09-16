@@ -908,7 +908,7 @@ def fix(out_path, base_path):
             apk_analyzer_results = run_apk_analyzer(file, TIMEOUT, apk_analyzer_dir)
         except ApkAnalyzerError:
             LOGGER.error(f'APK {package_name} failed processing with apkanalyzer.')
-            filewriter.apk_error(file, package_name)
+            filewriter.apk_error(out_path, package_name)
             continue
         packer_name = packer(file, directory)
         out = f'Packer:\t{packer_name}\n' \
