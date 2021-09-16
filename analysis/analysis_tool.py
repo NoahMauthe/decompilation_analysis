@@ -879,16 +879,20 @@ def fix(out_path, base_path):
         if not os.path.exists(src):
             LOGGER.error(f'Did not find existing decompilation results')
             continue
-        dest = src + '_old'
-        try:
-            shutil.copyfile(src, dest)
-        except:
-            LOGGER.error(f'Copying file from {src} to {dest} failed')
         with open(src, 'r') as in_file:
             content = in_file.read().strip()
         if content.startswith('Packer'):
             LOGGER.info(f'No need to fix {package_name}')
             continue
+        last_csv_header_line = 0
+        current_line = 0
+        for line in content.split('\n'):
+            line = line.strip()
+            if line == 'signature;size;C;F;J;P;C-R;F-R;J-R;P-R;':
+                last_csv_header_line = current_line
+            current_line += 1
+        if last_csv_header_line != 7:
+            content = '\n'.join(content.split('\n')[last_csv_header_line:])
         apk_analyzer_dir = os.path.join(directory, 'apkanalyzer')
         os.makedirs(apk_analyzer_dir, exist_ok=True)
         try:
