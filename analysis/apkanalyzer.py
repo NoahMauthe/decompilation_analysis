@@ -692,7 +692,7 @@ def run_apk_analyzer(apk, timeout, directory):
     dict
         A dict containing the following results:
             {
-                'total_methods': 'Total number of methods in the apk',
+                'method_count': 'Total number of methods in the apk',
                 'methods': 'A dict mapping method signatures to their sizes'
             }
     """
