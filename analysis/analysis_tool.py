@@ -875,10 +875,16 @@ def fix(out_path, base_path):
         package_name = file.split('/')[-1][:-4]
         directory = os.path.dirname(file)
         LOGGER.info(f'Processing apk {package_name}')
-        if not os.path.exists(os.path.join(out_path, f'{package_name}.ecsv')):
+        src = os.path.join(out_path, f'{package_name}.ecsv')
+        if not os.path.exists(src):
             LOGGER.error(f'Did not find existing decompilation results')
             continue
-        with open(os.path.join(out_path, f'{package_name}.ecsv'), 'r') as in_file:
+        dest = src + '_old'
+        try:
+            shutil.copyfile(src, dest)
+        except:
+            LOGGER.error(f'Copying file from {src} to {dest} failed')
+        with open(src, 'r') as in_file:
             content = in_file.read().strip()
         if content.startswith('Packer'):
             LOGGER.info(f'No need to fix {package_name}')
