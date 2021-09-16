@@ -35,6 +35,8 @@ def _parse_args():
                         help='directory containing config files')
     parser.add_argument('--out', dest='out', required=True, type=str,
                         help='path of the output directory')
+    parser.add_argument('--fix', dest='fix', required=False, action='store_true',
+                        help='Fixes some errors introduced in the last patch')
     return parser.parse_args()
 
 
@@ -53,6 +55,8 @@ def _setup_logging():
         Output path.
     bool :
         If set, only dex compatible decompilers will be run
+    bool :
+        If set, only a fix will be run instead of a full fledged decompilation
     """
     args = _parse_args()
     if args.VERBOSE:
@@ -70,10 +74,13 @@ def _setup_logging():
     stdout_handler.setFormatter(formatter)
     LOGGER.addHandler(file_handler)
     LOGGER.addHandler(stdout_handler)
-    return args.path, args.preserve, args.config, args.out, args.dex
+    return args.path, args.preserve, args.config, args.out, args.dex, args.fix
 
 
 if __name__ == '__main__':
-    path, preserve, processed, out, dex = _setup_logging()
+    path, preserve, processed, out, dex, fix = _setup_logging()
     apkanalyzer.init_logging(LOGGER)
-    analysis_tool.analyse(os.path.abspath(out), os.path.abspath(path), preserve, processed, dex)
+    if fix:
+        analysis_tool.fix(os.path.abspath(out), os.path.abspath(path))
+    else:
+        analysis_tool.analyse(os.path.abspath(out), os.path.abspath(path), preserve, processed, dex)

@@ -867,3 +867,39 @@ def analyse(out, base_path, preserve_dirs, config, dex):
                 f'      {initial:<5} were analyzed beforehand')
     with open(os.path.join(config, 'processed.json'), 'w+') as processed_files:
         json.dump({'files': ready_files}, processed_files, sort_keys=True, indent=4)
+
+
+def fix(out_path, base_path):
+    files = fnmatch.filter(glob.iglob(os.path.join(base_path, '**'), recursive=True), '*.apk')
+    for file in files:
+        package_name = file.split('/')[-1][:-4]
+        directory = os.path.dirname(file)
+        LOGGER.info(f'Processing apk {package_name}')
+        if not os.path.exists(os.path.join(out_path, f'{package_name}.ecsv')):
+            LOGGER.error(f'Did not find existing decompilation results')
+            continue
+        with open(os.path.join(out_path, f'{package_name}.ecsv'), 'r') as in_file:
+            content = in_file.read().strip()
+        if content.startswith('Packer'):
+            LOGGER.info(f'No need to fix {package_name}')
+            continue
+        apk_analyzer_dir = os.path.join(directory, 'apkanalyzer')
+        os.makedirs(apk_analyzer_dir, exist_ok=True)
+        try:
+            # LOGGER.info(f'Running apkanalyzer to fix {package_name}')
+            apk_analyzer_results = run_apk_analyzer(file, TIMEOUT, apk_analyzer_dir)
+        except ApkAnalyzerError:
+            LOGGER.error(f'APK {package_name} failed processing with apkanalyzer.')
+            filewriter.apk_error(file, package_name)
+            continue
+        packer_name = packer(file, directory)
+        out = f'Packer:\t{packer_name}\n' \
+              f'Methods:\t{apk_analyzer_results.get("method_count", -1)}\n' \
+              f'Size:\t{os.path.getsize(file)}\n' \
+              f'Downloads:\t-1\n' \
+              f'Family:\tandrozoo\n' \
+              f'##########\n\n' \
+              f'{content}\n'
+        with open(os.path.join(out_path, f'{package_name}.ecsv'), 'w') as out_file:
+            out_file.write(out)
+        LOGGER.info(f'Fixed {package_name}')
